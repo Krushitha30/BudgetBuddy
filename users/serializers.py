@@ -16,3 +16,18 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+
+
+from .models import Profile
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['phone', 'date_of_birth', 'profile_picture']
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'profile']
