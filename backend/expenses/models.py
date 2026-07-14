@@ -14,12 +14,14 @@ class Income(models.Model):
 
 class Expense(models.Model):
     CATEGORY_CHOICES = [
-        ('Food', 'Food'),
-        ('Transport', 'Transport'),
-        ('Shopping', 'Shopping'),
-        ('Bills', 'Bills'),
-        ('Health', 'Health'),
-        ('Other', 'Other'),
+        ('FOOD', 'FOOD'),
+        ('TRAVEL', 'TRAVEL'),
+        ('SHOPPING', 'SHOPPING'),
+        ('EDUCATION', 'EDUCATION'),
+        ('ENTERTAINMENT', 'ENTERTAINMENT'),
+        ('HEALTHCARE', 'HEALTHCARE'),
+        ('BILLS', 'BILLS'),
+        ('MISCELLANEOUS', 'MISCELLANEOUS'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
