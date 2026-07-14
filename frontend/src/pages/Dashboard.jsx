@@ -1,20 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import { getProfile } from '../services/authService';
+import { getSummary } from '../services/incomeService';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
+  const [summary, setSummary] = useState({ total_income: 0, total_expense: 0, current_balance: 0 });
 
   useEffect(() => {
     getProfile().then(setUser).catch(() => {});
+    getSummary().then(setSummary).catch(() => {});
   }, []);
 
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val);
+  };
+
   const cards = [
-    { icon: '💸', label: 'Total Expenses',  value: '₹0.00',  color: '#ef4444' },
-    { icon: '💵', label: 'Total Income',    value: '₹0.00',  color: '#22c55e' },
-    { icon: '📊', label: 'Active Budgets',  value: '0',      color: '#7c3aed' },
-    { icon: '🎯', label: 'Savings Goals',   value: '0',      color: '#f59e0b' },
+    { icon: '💵', label: 'Total Income',    value: formatCurrency(summary.total_income),  color: '#22c55e' },
+    { icon: '💸', label: 'Total Expenses',  value: formatCurrency(summary.total_expense),  color: '#ef4444' },
+    { icon: '⚖️', label: 'Current Balance',  value: formatCurrency(summary.current_balance),  color: '#3b82f6' },
   ];
 
   return (
@@ -35,7 +41,7 @@ const Dashboard = () => {
         ))}
       </div>
       <div className="dashboard-note">
-        <p>🚀 <strong>Milestone 1 Complete!</strong> Authentication is working. Start adding your expenses and budgets to see insights here.</p>
+        <p>🚀 <strong>Personal Budget Summary</strong>: Track your income and expenses here. Use the side menu to log new entries.</p>
       </div>
     </MainLayout>
   );
