@@ -18,6 +18,9 @@ urlpatterns = [
     # Income API
     path('api/income/', include('income.urls')),
 
+    # Budgets API
+    path('api/budgets/', include('budgets.urls')),
+
     # JWT Authentication
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
