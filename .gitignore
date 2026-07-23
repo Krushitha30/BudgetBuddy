@@ -14,3 +14,7 @@ __pycache__/
 
 # Environment variables
 .env
+
+# Postman local workspace files (auto-generated)
+.postman/
+postman/
