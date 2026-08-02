@@ -24,6 +24,9 @@ urlpatterns = [
     # Savings API
     path('api/savings/', include('savings.urls')),
 
+    # Notifications API
+    path('api/notifications/', include('notifications.urls')),
+
     # JWT Authentication
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
