@@ -21,6 +21,7 @@ const MainLayout = ({ children }) => {
           <NavLink to="/expenses"  className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>💸 Expenses</NavLink>
           <NavLink to="/income"    className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>💵 Income</NavLink>
           <NavLink to="/budgets"   className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>📊 Budgets</NavLink>
+          <NavLink to="/savings"   className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>🎯 Savings</NavLink>
           <NavLink to="/reports"   className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>📈 Reports</NavLink>
           <NavLink to="/settings"  className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>⚙️ Settings</NavLink>
         </nav>
