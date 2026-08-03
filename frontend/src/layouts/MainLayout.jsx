@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { logout } from '../services/authService';
+import NotificationBell from '../components/NotificationBell';
 import './MainLayout.css';
 
 const MainLayout = ({ children }) => {
@@ -25,7 +26,16 @@ const MainLayout = ({ children }) => {
         </nav>
         <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
       </aside>
-      <main className="main-content">{children}</main>
+
+      <div className="main-wrapper">
+        <header className="top-header">
+          <div className="header-title">Personal Budget Planning & Expense Management</div>
+          <div className="header-actions">
+            <NotificationBell />
+          </div>
+        </header>
+        <main className="main-content">{children}</main>
+      </div>
     </div>
   );
 };
