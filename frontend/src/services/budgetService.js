@@ -26,3 +26,10 @@ export const getBudgetSummary = async (category, month, year) => {
   });
   return response.data;
 };
+
+export const getBudgetAlert = async (category, month, year) => {
+  const response = await api.get('/budgets/alerts/', {
+    params: { category, month, year }
+  });
+  return response.data;
+};

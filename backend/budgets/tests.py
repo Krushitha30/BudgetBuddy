@@ -157,3 +157,104 @@ class BudgetAPITests(APITestCase):
         self.client.credentials()
         response = self.client.get(self.list_create_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class BudgetAlertTests(APITestCase):
+    """Task 6 - Test Different Scenarios for Budget Alerts"""
+
+    def setUp(self):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        from datetime import date
+        self.user = User.objects.create_user(username='alertuser', password='testpass')
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.today = date.today()
+
+        # Create a FOOD budget of 1000 for current month
+        self.budget = Budget.objects.create(
+            user=self.user,
+            category='FOOD',
+            budget_amount=1000.00,
+            month=self.today.month,
+            year=self.today.year,
+        )
+        self.alert_url = '/api/budgets/alerts/?category=FOOD&month={}&year={}'.format(
+            self.today.month, self.today.year
+        )
+
+    def _add_expense(self, amount):
+        from datetime import date
+        Expense.objects.create(
+            user=self.user,
+            title='Test Expense',
+            category='FOOD',
+            amount=amount,
+            expense_date=self.today,
+            description='Test',
+        )
+
+    def test_alert_level_none_under_80(self):
+        """Under 80% → NONE alert level"""
+        self._add_expense(500)  # 50%
+        response = self.client.get(self.alert_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['alert_level'], 'NONE')
+        self.assertEqual(response.data['budget_utilization_percentage'], 50.0)
+
+    def test_alert_level_warning_at_80(self):
+        """At 80% → WARNING alert level"""
+        self._add_expense(800)  # 80%
+        response = self.client.get(self.alert_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['alert_level'], 'WARNING')
+
+    def test_alert_level_high_warning_at_90(self):
+        """At 90% → HIGH_WARNING alert level"""
+        self._add_expense(900)  # 90%
+        response = self.client.get(self.alert_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['alert_level'], 'HIGH_WARNING')
+
+    def test_alert_level_exceeded_at_100(self):
+        """At 100%+ → EXCEEDED alert level"""
+        self._add_expense(1100)  # 110%
+        response = self.client.get(self.alert_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['alert_level'], 'EXCEEDED')
+
+    def test_alert_api_response_fields(self):
+        """Alert API returns all required fields"""
+        self._add_expense(850)
+        response = self.client.get(self.alert_url)
+        self.assertEqual(response.status_code, 200)
+        for field in ['budget_category', 'budget_amount', 'total_expense',
+                      'budget_utilization_percentage', 'alert_level', 'alert_message']:
+            self.assertIn(field, response.data)
+
+    def test_duplicate_alert_prevention(self):
+        """Task 3 - Same threshold only fires one notification"""
+        from notifications.models import Notification
+        # First expense at 80% — should create 1 notification
+        self._add_expense(800)
+        count_after_first = Notification.objects.filter(
+            user=self.user, notification_type='BUDGET', title__contains='80%'
+        ).count()
+        # Second expense still at 80% range — should NOT create another
+        self._add_expense(50)
+        count_after_second = Notification.objects.filter(
+            user=self.user, notification_type='BUDGET', title__contains='80%'
+        ).count()
+        self.assertEqual(count_after_first, count_after_second)
+
+    def test_alert_api_jwt_protected(self):
+        """Alert API requires JWT token"""
+        self.client.credentials()
+        response = self.client.get(self.alert_url)
+        self.assertEqual(response.status_code, 401)
+
+    def test_alert_api_no_budget_returns_404(self):
+        """Alert API returns 404 when no budget found"""
+        response = self.client.get('/api/budgets/alerts/?category=TRAVEL&month={}&year={}'.format(
+            self.today.month, self.today.year
+        ))
+        self.assertEqual(response.status_code, 404)

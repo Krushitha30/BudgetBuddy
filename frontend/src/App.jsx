@@ -11,6 +11,7 @@ import Income    from './pages/Income';
 import Budgets   from './pages/Budgets';
 import Reports   from './pages/Reports';
 import Settings  from './pages/Settings';
+import Savings   from './pages/Savings';
 
 // Protect routes that need login
 const PrivateRoute = ({ children }) => {
@@ -31,6 +32,7 @@ function App() {
         <Route path="/expenses"  element={<PrivateRoute><Expenses /></PrivateRoute>} />
         <Route path="/income"    element={<PrivateRoute><Income /></PrivateRoute>} />
         <Route path="/budgets"   element={<PrivateRoute><Budgets /></PrivateRoute>} />
+        <Route path="/savings"   element={<PrivateRoute><Savings /></PrivateRoute>} />
         <Route path="/reports"   element={<PrivateRoute><Reports /></PrivateRoute>} />
         <Route path="/settings"  element={<PrivateRoute><Settings /></PrivateRoute>} />
 
