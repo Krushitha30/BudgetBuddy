@@ -6,6 +6,7 @@ from budgets.models import Budget
 from expenses.models import Expense
 from income.models import Income
 from .models import Notification
+from budgets.budget_alerts import generate_budget_alerts
 
 
 @receiver(post_save, sender=SavingsGoal)
@@ -72,42 +73,33 @@ def handle_budget_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Expense)
 def handle_expense_notification(sender, instance, created, **kwargs):
     if created:
-        # 1. General Expense Added Notification
+        # General: Expense Added Notification
         Notification.objects.create(
             user=instance.user,
             title="New Expense Added",
-            message=f"Added expense '{instance.title}' of ${instance.amount} under {instance.category}.",
+            message=f"Added expense '{instance.title}' of ₹{instance.amount} under {instance.category}.",
             notification_type="EXPENSE",
             priority="LOW",
             is_read=False
         )
 
-        # 2. Check if total expenses exceed category budget
-        month = instance.expense_date.month
-        year = instance.expense_date.year
-        category = instance.category
-
-        try:
-            budget = Budget.objects.get(user=instance.user, category=category, month=month, year=year)
-            total_expense = Expense.objects.filter(
-                user=instance.user,
-                category=category,
-                expense_date__month=month,
-                expense_date__year=year
-            ).aggregate(total=Sum('amount'))['total'] or 0
-
-            if total_expense > budget.budget_amount:
-                overspent = total_expense - budget.budget_amount
-                Notification.objects.create(
-                    user=instance.user,
-                    title="⚠️ Budget Exceeded Alert!",
-                    message=f"Alert: You have overspent your {category} budget for {month}/{year} by ${overspent:.2f}! (Budget: ${budget.budget_amount}, Spent: ${total_expense:.2f})",
-                    notification_type="BUDGET",
-                    priority="HIGH",
-                    is_read=False
-                )
-        except Budget.DoesNotExist:
-            pass
+    # Task 1, 2, 3, 4: Always run budget alert check (for both create and update)
+    try:
+        from datetime import date as date_type
+        expense_date = instance.expense_date
+        # expense_date may be a string ('2026-07-10') or a date object
+        if isinstance(expense_date, str):
+            from datetime import datetime
+            expense_date = datetime.strptime(expense_date, '%Y-%m-%d').date()
+        budget = Budget.objects.get(
+            user=instance.user,
+            category=instance.category,
+            month=expense_date.month,
+            year=expense_date.year,
+        )
+        generate_budget_alerts(budget, instance.user)
+    except Budget.DoesNotExist:
+        pass
 
 
 @receiver(post_save, sender=Income)

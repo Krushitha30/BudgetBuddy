@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Sum
 from .models import Budget
 from .serializers import BudgetSerializer
+from .budget_alerts import calculate_utilization, ALERT_THRESHOLDS
 from expenses.models import Expense
 
 class BudgetListCreateView(generics.ListCreateAPIView):
@@ -84,3 +85,78 @@ class BudgetCategorySummaryView(APIView):
             "remaining_budget": remaining_budget,
             "overspent_amount": overspent_amount
         })
+
+
+class BudgetAlertAPIView(APIView):
+    """
+    Task 5 - Budget Alert API
+    GET /api/budgets/alerts/?category=FOOD&month=8&year=2026
+    Returns:
+        - budget_category
+        - budget_amount
+        - total_expense
+        - budget_utilization_percentage
+        - alert_level      (NONE / WARNING / HIGH_WARNING / EXCEEDED)
+        - alert_message
+    Protected by JWT Authentication.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        category = request.query_params.get('category', '').upper()
+        month    = request.query_params.get('month')
+        year     = request.query_params.get('year')
+
+        if not category or not month or not year:
+            return Response(
+                {"error": "Please provide category, month, and year query parameters."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            month = int(month)
+            year  = int(year)
+        except ValueError:
+            return Response(
+                {"error": "Month and year must be valid integers."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            budget = Budget.objects.get(
+                user=request.user, category=category, month=month, year=year
+            )
+        except Budget.DoesNotExist:
+            return Response(
+                {"error": f"No budget found for {category} in {month}/{year}."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        total_expense, utilization_pct = calculate_utilization(budget, request.user)
+        budget_amt = float(budget.budget_amount)
+        overspent  = max(0, total_expense - budget_amt)
+
+        # Determine alert level and message
+        alert_level   = "NONE"
+        alert_message = f"Budget is under control. You have used {utilization_pct:.1f}% of your {category} budget."
+
+        for threshold in reversed(ALERT_THRESHOLDS):
+            if utilization_pct >= threshold['min_pct']:
+                alert_level   = threshold['level']
+                alert_message = threshold['msg_tpl'].format(
+                    pct=utilization_pct,
+                    category=category,
+                    spent=total_expense,
+                    budget=budget_amt,
+                    overspent=overspent,
+                ).split(' [ALERT:')[0]   # strip duplicate-prevention marker
+                break
+
+        return Response({
+            "budget_category":            category,
+            "budget_amount":              round(budget_amt, 2),
+            "total_expense":              round(total_expense, 2),
+            "budget_utilization_percentage": round(utilization_pct, 2),
+            "alert_level":               alert_level,
+            "alert_message":             alert_message,
+        }, status=status.HTTP_200_OK)
