@@ -21,6 +21,9 @@ urlpatterns = [
     # Budgets API
     path('api/budgets/', include('budgets.urls')),
 
+    # Reports API
+    path('api/reports/', include('reports.urls')),
+
     # Savings API
     path('api/savings/', include('savings.urls')),
 
