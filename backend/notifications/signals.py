@@ -6,6 +6,7 @@ from budgets.models import Budget
 from expenses.models import Expense
 from income.models import Income
 from .models import Notification
+from .email_service import send_notification_email
 from budgets.budget_alerts import generate_budget_alerts
 
 
@@ -113,3 +114,11 @@ def handle_income_notification(sender, instance, created, **kwargs):
             priority="LOW",
             is_read=False
         )
+
+
+@receiver(post_save, sender=Notification)
+def handle_notification_email_dispatch(sender, instance, created, **kwargs):
+    """Triggers an email dispatch whenever a new Notification model is created."""
+    if created:
+        send_notification_email(instance)
+
