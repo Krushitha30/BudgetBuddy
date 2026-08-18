@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import { getProfile } from '../services/authService';
 import { getDashboardData } from '../services/analyticsService';
+import AnalyticsCharts from '../components/AnalyticsCharts';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -27,6 +28,7 @@ const Dashboard = () => {
   const monthlyData = dashboard?.monthly_trend?.monthly_trend || {};
   const recentExpenses = dashboard?.recent_transactions?.expenses || [];
   const activeSavings = dashboard?.active_savings_goals || [];
+  const budgets = dashboard?.budgets || [];
 
   const cards = [
     { icon: '💵', label: 'Total Income',     value: formatCurrency(summary.total_income),     color: '#22c55e' },
@@ -59,6 +61,16 @@ const Dashboard = () => {
               </div>
             ))}
           </div>
+
+          {/* Interactive Chart Visualizations */}
+          <AnalyticsCharts
+            monthlyTrend={monthlyData}
+            categoryExpenses={categoryData}
+            financialSummary={summary}
+            budgets={budgets}
+            savingsGoals={activeSavings}
+          />
+
 
           {/* Category & Monthly Analytics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '28px' }}>
