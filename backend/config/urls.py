@@ -21,11 +21,17 @@ urlpatterns = [
     # Budgets API
     path('api/budgets/', include('budgets.urls')),
 
+    # Reports API
+    path('api/reports/', include('reports.urls')),
+
     # Savings API
     path('api/savings/', include('savings.urls')),
 
     # Notifications API
     path('api/notifications/', include('notifications.urls')),
+
+    # Analytics API
+    path('api/analytics/', include('analytics.urls')),
 
     # JWT Authentication
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

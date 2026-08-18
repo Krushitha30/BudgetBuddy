@@ -128,8 +128,33 @@ class NotificationAPITests(TestCase):
         notifs = Notification.objects.filter(user=self.user, title='Budget Updated')
         self.assertTrue(notifs.exists())
 
+    def test_email_notification_dispatch(self):
+        """Test that creating a notification sends an email to the user."""
+        from django.core import mail
+        mail.outbox = []  # Clear outbox
+
+        # Give user an email
+        self.user.email = 'user@example.com'
+        self.user.save()
+
+        Notification.objects.create(
+            user=self.user,
+            title='Email Test Title',
+            message='Testing Email Dispatch Message',
+            notification_type='GENERAL',
+            priority='HIGH'
+        )
+
+        # Check outbox
+        self.assertEqual(len(mail.outbox), 1)
+        sent_email = mail.outbox[0]
+        self.assertEqual(sent_email.subject, '[BudgetBuddy] Email Test Title')
+        self.assertIn('user@example.com', sent_email.to)
+        self.assertIn('Testing Email Dispatch Message', sent_email.body)
+
     def test_jwt_protection(self):
         """JWT authentication protection."""
         self.client.credentials()  # Clear auth token
         response = self.client.get('/api/notifications/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
